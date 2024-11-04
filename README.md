@@ -12,4 +12,4 @@ Sesuai Namanya Features Ini Berguna Untuk Melihat Siapa Saja Yang Kamu Block Di 
 ```
 Jangan Sungkan Untuk Scan QRIS Ini Dengan E-Wallet Kamu! Terima Kasih!
 ```
-<p align=center><a href="https://github.com/NekoMonci12"><img src="https://cdn.nekocraft.xyz/nekomonci/qris.png" width="96"></img></a></p>
+<p align=center><a href="https://github.com/NekoMonci12"><img src="https://cdn.nekocraft.xyz/nekomonci/qris.png" width="360"></img></a></p>
