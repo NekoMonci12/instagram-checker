@@ -1,28 +1,12 @@
-<p align=center><a href="https://arwildo.com/"><img src="https://arwildo.com/android-chrome-192x192.png" width="32"></img></a></p> 
-
-## Sigif
-See IG Information. See the people you follow but who didn't follow you back.
-
-### Requirements
-* [Python3](https://www.python.org/) - Programming Language
-
-### How to Use
-1. Download the followers and following data through IG settings.
-
-2. Clone the repository:
+## Instagram Checker Current Features
+1. Follback Checker [(Forked From @arwildo)](https://github.com/arwildo/sigif)
 ```
-git clone https://github.com/arwildo/sigif
+Penasaran Dengan Siapa Saja Yang Kamu Folow Tetapi Tidak Follback Kamu?
+```
+2. Blocklist Checker
+```
+Sesuai Namanya Features Ini Berguna Untuk Melihat Siapa Saja Yang Kamu Block Di Instagram!
 ```
 
-3. Open the repository and create a `data` folder inside:
-```
-cd sigif
-mkdir data
-```
-
-4. Place the `followers_1.json` and `following.json` files that you've downloaded from IG settings into the `data` folder.
-
-5. Run the main.py:
-```
-python3 main.py
-```
+## Suka Dengan Project Ini?
+<p align=center><a href="https://github.com/NekoMonci12"><img src="https://cdn.enkocraft.xyz/nekomonci/qris.png" width="96"></img></a></p>
