@@ -9,4 +9,7 @@ Sesuai Namanya Features Ini Berguna Untuk Melihat Siapa Saja Yang Kamu Block Di 
 ```
 
 ## Suka Dengan Project Ini?
-<p align=center><a href="https://github.com/NekoMonci12"><img src="https://cdn.enkocraft.xyz/nekomonci/qris.png" width="96"></img></a></p>
+```
+Jangan Sungkan Untuk Scan QRIS Ini Dengan E-Wallet Kamu! Terima Kasih!
+```
+<p align=center><a href="https://github.com/NekoMonci12"><img src="https://cdn.nekocraft.xyz/nekomonci/qris.png" width="96"></img></a></p>
