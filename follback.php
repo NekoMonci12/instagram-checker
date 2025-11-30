@@ -91,7 +91,9 @@ header('Content-Type: text/html; charset=utf-8');
 
             foreach ($followingData["relationships_following"] as $item) {
                 foreach ($item["string_list_data"] as $j) {
-                    $following[] = $j["value"];
+                    $urlParts = explode("/", rtrim($j["href"], "/"));
+                    $username = end($urlParts);
+                    $following[] = $username;
                 }
             }
             
