@@ -91,19 +91,20 @@ header('Content-Type: text/html; charset=utf-8');
 
             foreach ($followingData["relationships_following"] as $item) {
                 foreach ($item["string_list_data"] as $j) {
-                    $urlParts = explode("/", rtrim($j["href"], "/"));
-                    $username = end($urlParts);
+
+                    $path = parse_url($j["href"], PHP_URL_PATH); 
+                    $parts = explode("/", trim($path, "/"));
+                    $username = end($parts);
+
                     $following[] = $username;
                 }
             }
             
-            // Find mutual followers
-            $goodpeople = array_intersect($following, $followers);
+            $followers = array_unique(array_map('strtolower', $followers));
+            $following = array_unique(array_map('strtolower', $following));
 
-            // Find users who follow you but you don't follow back
-            $unfollowers = array_filter($following, function($user) use ($goodpeople) {
-                return !in_array($user, $goodpeople);
-            });
+            // Users you follow but they don't follow you back
+            $unfollowers = array_diff($following, $followers);
 
             // Count unfollowers
             $unfollowersCount = count($unfollowers);
