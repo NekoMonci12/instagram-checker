@@ -4,79 +4,79 @@ header('Content-Type: text/html; charset=utf-8');
 
 /**
  * FOLLBACK CHECKER - FIXED VERSION
- * Perbaikan:
- * 1. JSON validation yang proper
+ * Fixes:
+ * 1. Proper JSON validation
  * 2. File upload security
- * 3. Error handling yang lengkap
- * 4. Parsing username yang lebih reliable
- * 5. Struktur data validation
+ * 3. Complete error handling
+ * 4. More reliable username parsing
+ * 5. Data structure validation
  */
 
-// Fungsi untuk validasi uploaded file
+// Function to validate uploaded file
 function validateUploadedFile($fileInputName, $maxSizeInMB = 10) {
-    // Cek apakah file ada di $_FILES
+    // Check if the file exists in $_FILES
     if (!isset($_FILES[$fileInputName])) {
-        return ['error' => "File tidak ditemukan"];
+        return ['error' => "File not found"];
     }
 
     $file = $_FILES[$fileInputName];
 
-    // Cek upload error
+    // Check upload error
     if ($file['error'] !== UPLOAD_ERR_OK) {
         $errorMessages = [
-            UPLOAD_ERR_INI_SIZE => "File melebihi upload_max_filesize",
-            UPLOAD_ERR_FORM_SIZE => "File melebihi max_file_size",
-            UPLOAD_ERR_PARTIAL => "File hanya terupload sebagian",
-            UPLOAD_ERR_NO_FILE => "Tidak ada file yang diupload",
-            UPLOAD_ERR_NO_TMP_DIR => "Temporary folder hilang",
-            UPLOAD_ERR_CANT_WRITE => "Tidak bisa write ke disk",
-            UPLOAD_ERR_EXTENSION => "Upload dihentikan oleh extension"
+            UPLOAD_ERR_INI_SIZE => "File exceeds upload_max_filesize",
+            UPLOAD_ERR_FORM_SIZE => "File exceeds max_file_size",
+            UPLOAD_ERR_PARTIAL => "File was only partially uploaded",
+            UPLOAD_ERR_NO_FILE => "No file was uploaded",
+            UPLOAD_ERR_NO_TMP_DIR => "Missing temporary folder",
+            UPLOAD_ERR_CANT_WRITE => "Failed to write file to disk",
+            UPLOAD_ERR_EXTENSION => "Upload stopped by extension"
         ];
-        return ['error' => $errorMessages[$file['error']] ?? "Upload error tidak diketahui"];
+        return ['error' => $errorMessages[$file['error']] ?? "Unknown upload error"];
     }
 
-    // Cek extension file
+    // Check file extension
     $fileName = $file['name'];
     if (!preg_match('/\.json$/i', $fileName)) {
-        return ['error' => "File harus berformat .json (Anda upload: $fileName)"];
+        return ['error' => "File must be in .json format (You uploaded: $fileName)"];
     }
 
-    // Cek file size
+    // Check file size
     $fileSizeInMB = $file['size'] / (1024 * 1024);
     if ($fileSizeInMB > $maxSizeInMB) {
-        return ['error' => "File terlalu besar ({$fileSizeInMB}MB, max: {$maxSizeInMB}MB)"];
+        return ['error' => "File is too large ({$fileSizeInMB}MB, max: {$maxSizeInMB}MB)"];
     }
 
-    // Cek apakah file benar-benar ada di temp
+    // Check if file actually exists in temp folder
     if (!file_exists($file['tmp_name'])) {
-        return ['error' => "File temporary hilang"];
+        return ['error' => "Temporary file is missing"];
     }
 
-    // Validasi JSON
+    // Validate JSON
     $content = @file_get_contents($file['tmp_name']);
     if ($content === false) {
-        return ['error' => "Tidak bisa membaca file"];
+        return ['error' => "Cannot read file"];
     }
 
     $decodedData = json_decode($content, true);
     if ($decodedData === null && json_last_error() !== JSON_ERROR_NONE) {
-        return ['error' => "File bukan JSON valid: " . json_last_error_msg()];
+        return ['error' => "File is not valid JSON: " . json_last_error_msg()];
     }
 
     return ['success' => true, 'path' => $file['tmp_name'], 'data' => $decodedData];
 }
 
-// Fungsi untuk extract username dari followers
+// Function to extract usernames from followers
 function extractFollowers($followersData) {
     $followers = [];
     $errors = [];
 
     if (!is_array($followersData)) {
-        return ['followers' => [], 'errors' => ["Followers data bukan array"]];
+        return ['followers' => [], 'errors' => ["Followers data is not an array"]];
     }
 
     foreach ($followersData as $index => $item) {
-        // Validasi struktur
+        // Validate structure
         if (!isset($item["string_list_data"]) || !is_array($item["string_list_data"])) {
             continue;
         }
@@ -95,26 +95,26 @@ function extractFollowers($followersData) {
     ];
 }
 
-// Fungsi untuk extract username dari following
+// Function to extract usernames from following
 function extractFollowing($followingData) {
     $following = [];
     $errors = [];
 
-    // Validasi struktur
+    // Validate structure
     if (!isset($followingData["relationships_following"]) || !is_array($followingData["relationships_following"])) {
-        return ['following' => [], 'errors' => ["Struktur following.json tidak sesuai"]];
+        return ['following' => [], 'errors' => ["Structure of following.json is incorrect"]];
     }
 
     foreach ($followingData["relationships_following"] as $item) {
-        // Cek apakah ada title (lebih reliable)
+        // Check if title exists (more reliable)
         if (isset($item["title"]) && !empty($item["title"])) {
             $following[] = strtolower($item["title"]);
         }
-        // Fallback: parse dari href jika title tidak ada
+        // Fallback: parse from href if title is not present
         elseif (isset($item["string_list_data"]) && is_array($item["string_list_data"])) {
             foreach ($item["string_list_data"] as $userItem) {
                 if (isset($userItem["href"])) {
-                    // Extract username dari URL
+                    // Extract username from URL
                     // Format: https://www.instagram.com/_u/username
                     if (preg_match('/_u\/([^?\/]+)/', $userItem["href"], $matches)) {
                         $following[] = strtolower($matches[1]);
@@ -139,33 +139,38 @@ function extractFollowing($followingData) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Follback | Checker Result</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
             padding: 20px;
         }
 
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin: 25px 0 15px 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
         .container {
-            max-width: 700px;
+            max-width: 600px;
             margin: 0 auto;
             background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px;
             text-align: center;
+            margin-bottom: 20px;
         }
 
         .header h1 {
@@ -174,12 +179,8 @@ function extractFollowing($followingData) {
         }
 
         .header p {
-            opacity: 0.9;
+            color: #666;
             font-size: 14px;
-        }
-
-        .content {
-            padding: 30px 20px;
         }
 
         .alert {
@@ -190,21 +191,21 @@ function extractFollowing($followingData) {
         }
 
         .alert.error {
-            background-color: #fee;
-            border-left-color: #c33;
-            color: #c33;
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
         }
 
         .alert.success {
-            background-color: #efe;
-            border-left-color: #3c3;
-            color: #3c3;
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
         }
 
         .alert.warning {
-            background-color: #ffe;
-            border-left-color: #cc3;
-            color: #884400;
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
         }
 
         .stats {
@@ -223,15 +224,15 @@ function extractFollowing($followingData) {
         }
 
         .stat-box.followers {
-            border-top-color: #667eea;
+            border-top-color: #007bff;
         }
 
         .stat-box.following {
-            border-top-color: #764ba2;
+            border-top-color: #555;
         }
 
         .stat-box.notfollback {
-            border-top-color: #f59e0b;
+            border-top-color: #ffc107;
         }
 
         .stat-box h3 {
@@ -246,19 +247,12 @@ function extractFollowing($followingData) {
             text-transform: uppercase;
         }
 
-        h2 {
-            font-size: 20px;
-            margin: 25px 0 15px 0;
-            color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
         ul {
             list-style: none;
             column-count: 2;
             column-gap: 20px;
             margin-bottom: 20px;
+            padding: 0;
         }
 
         @media (max-width: 600px) {
@@ -276,37 +270,18 @@ function extractFollowing($followingData) {
         }
 
         a {
-            color: #667eea;
+            color: #007bff;
             text-decoration: none;
-            font-weight: 500;
         }
 
         a:hover {
             text-decoration: underline;
-            color: #764ba2;
         }
 
         .footer {
             text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            color: #666;
-            font-size: 13px;
-        }
-
-        .footer a {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            background: #764ba2;
+            margin-top: 20px;
+            color: #555;
         }
 
         .empty {
@@ -329,46 +304,46 @@ function extractFollowing($followingData) {
 
 <div class="container">
     <div class="header">
-        <h1>📊 Follback Checker</h1>
-        <p>Analisis follow-unfollow Instagram Anda</p>
+        <h1>Follback Checker</h1>
+        <p>Analyze your Instagram follow-unfollow data</p>
     </div>
 
     <div class="content">
         <?php
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // Validasi file followers
+            // Validate followers file
             $followersValidation = validateUploadedFile('followers');
             if (isset($followersValidation['error'])) {
-                echo '<div class="alert error">❌ Error Followers: ' . htmlspecialchars($followersValidation['error']) . '</div>';
-                echo '<div class="footer"><a href="follback.html">← Kembali ke Upload</a></div>';
+                echo '<div class="alert error">Error Followers: ' . htmlspecialchars($followersValidation['error']) . '</div>';
+                echo '<div class="footer"><a href="follback.html">Back to Upload</a></div>';
             }
-            // Validasi file following
+            // Validate following file
             elseif (!isset($_FILES['following'])) {
-                echo '<div class="alert error">❌ File following tidak ditemukan</div>';
-                echo '<div class="footer"><a href="follback.html">← Kembali ke Upload</a></div>';
+                echo '<div class="alert error">File following not found</div>';
+                echo '<div class="footer"><a href="follback.html">Back to Upload</a></div>';
             }
             else {
                 $followingValidation = validateUploadedFile('following');
                 if (isset($followingValidation['error'])) {
-                    echo '<div class="alert error">❌ Error Following: ' . htmlspecialchars($followingValidation['error']) . '</div>';
-                    echo '<div class="footer"><a href="follback.html">← Kembali ke Upload</a></div>';
+                    echo '<div class="alert error">Error Following: ' . htmlspecialchars($followingValidation['error']) . '</div>';
+                    echo '<div class="footer"><a href="follback.html">Back to Upload</a></div>';
                 }
                 else {
-                    // Ekstrak data
+                    // Extract data
                     $followersResult = extractFollowers($followersValidation['data']);
                     $followingResult = extractFollowing($followingValidation['data']);
 
                     $followers = $followersResult['followers'];
                     $following = $followingResult['following'];
 
-                    // Hitung not follow back
+                    // Calculate not follow back
                     $notFollowBack = array_diff($following, $followers);
                     $notFollowBackCount = count($notFollowBack);
 
-                    // Hitung mutual
+                    // Calculate mutual
                     $mutual = count(array_intersect($following, $followers));
 
-                    // Tampilkan statistik
+                    // Display statistics
                     echo '<div class="stats">';
                     echo '<div class="stat-box followers">';
                     echo '<h3>' . count($followers) . '</h3>';
@@ -380,48 +355,48 @@ function extractFollowing($followingData) {
                     echo '</div>';
                     echo '<div class="stat-box notfollback">';
                     echo '<h3>' . $notFollowBackCount . '</h3>';
-                    echo '<p>Tidak Follow Back</p>';
+                    echo '<p>Not Following Back</p>';
                     echo '</div>';
                     echo '</div>';
 
-                    // Tampilkan hasil
-                    echo '<h2>👤 Pengguna Yang Tidak Follow Back (' . $notFollowBackCount . ')</h2>';
+                    // Display results
+                    echo '<h2>Users Who Do Not Follow Back (' . $notFollowBackCount . ')</h2>';
 
                     if ($notFollowBackCount > 0) {
+                        sort($notFollowBack);
                         echo '<ul>';
-                        foreach (array_sort($notFollowBack) as $user) {
+                        foreach ($notFollowBack as $user) {
                             echo '<li><a href="https://www.instagram.com/' . htmlspecialchars($user) . '" target="_blank">' . htmlspecialchars($user) . '</a></li>';
                         }
                         echo '</ul>';
 
                         echo '<div class="alert warning">';
-                        echo '💡 <strong>Tips:</strong> Anda bisa unfollow akun-akun di atas jika ingin. Gunakan Instagram app untuk mass unfollow.';
+                        echo '<strong>Tip:</strong> You can unfollow the accounts above if you\'d like. Use the Instagram app to mass unfollow.';
                         echo '</div>';
                     } else {
                         echo '<div class="empty">';
-                        echo '<div class="emoji">🎉</div>';
-                        echo '<p>Semua orang yang Anda follow juga follow Anda kembali!</p>';
+                        echo '<p>Everyone you follow follows you back!</p>';
                         echo '</div>';
                     }
 
-                    // Info tambahan
-                    echo '<h2>📈 Informasi Tambahan</h2>';
+                    // Additional info
+                    echo '<h2>Additional Information</h2>';
                     echo '<ul style="column-count: 1;">';
-                    echo '<li><strong>Mutual Follow:</strong> ' . $mutual . ' orang</li>';
-                    echo '<li><strong>Followers Yang Tidak Kamu Follow:</strong> ' . count(array_diff($followers, $following)) . ' orang</li>';
-                    echo '<li><strong>Akurasi Data:</strong> Berdasarkan export terbaru dari Instagram</li>';
+                    echo '<li><strong>Mutual Follow:</strong> ' . $mutual . ' users</li>';
+                    echo '<li><strong>Followers You Do Not Follow Back:</strong> ' . count(array_diff($followers, $following)) . ' users</li>';
+                    echo '<li><strong>Data Accuracy:</strong> Based on the latest export from Instagram</li>';
                     echo '</ul>';
                 }
             }
         } else {
             echo '<div class="alert warning">';
-            echo '⚠️ Permintaan tidak valid atau data tidak lengkap.';
+            echo 'Invalid request or incomplete data.';
             echo '</div>';
         }
         ?>
 
         <div class="footer">
-            <a href="follback.html">← Kembali ke Upload</a>
+            <a href="follback.html">Back to Upload</a>
         </div>
     </div>
 </div>
